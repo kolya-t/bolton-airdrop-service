@@ -5,7 +5,7 @@ import io.mywish.airdrop.exception.UnlockAddressException;
 import io.mywish.airdrop.model.contracts.DepositPlan;
 import io.mywish.eventscan.model.Investor;
 import io.mywish.eventscan.repositories.InvestorRepository;
-import io.mywish.scanner.NewBlockEvent;
+import io.mywish.scanner.model.NewBlockEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

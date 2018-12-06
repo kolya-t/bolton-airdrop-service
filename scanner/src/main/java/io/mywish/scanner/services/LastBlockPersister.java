@@ -1,4 +1,4 @@
-package io.mywish.scanner;
+package io.mywish.scanner.services;
 
 import io.mywish.eventscan.model.LastBlock;
 import io.mywish.eventscan.repositories.LastBlockRepository;

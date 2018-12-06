@@ -1,13 +1,14 @@
-package io.mywish.scanner;
+package io.mywish.scanner.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.MultiValueMap;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.Transaction;
 
 @RequiredArgsConstructor
 @Getter
-public class NewTransactionEvent extends BaseEvent {
+public class NewBlockEvent extends BaseEvent {
     private final EthBlock.Block block;
-    private final Transaction transaction;
+    private final MultiValueMap<String, Transaction> transactionsByAddress;
 }
