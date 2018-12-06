@@ -21,6 +21,7 @@
 
         <web3j.version>4.0.3</web3j.version>
         <logstash.version>4.11</logstash.version>
+        <guava.version>27.0.1-jre</guava.version>
     </properties>
 
     <dependencies>
@@ -57,6 +58,13 @@
                     <artifactId>slf4j-nop</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
     </dependencies>
 

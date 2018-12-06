@@ -1,5 +1,6 @@
 package io.mywish.airdrop.service;
 
+import com.google.common.collect.Lists;
 import io.mywish.airdrop.exception.UnlockAddressException;
 import io.mywish.airdrop.model.contracts.DepositPlan;
 import io.mywish.eventscan.model.Investor;
@@ -54,6 +55,8 @@ public class AirdropService {
     private String platinumAddress;
     @Value("${io.mywish.airdrop.try-and-buy-address}")
     private String tryAndBuyAddress;
+    @Value("${io.mywish.airdrop.investors-batch-size:100}")
+    private int investorsBatchSize;
 
     private List<String> contractAddresses;
     private TransactionManager transactionManager;
@@ -167,16 +170,18 @@ public class AirdropService {
                 return;
             }
 
-            unlockInvoke()
-                    .thenAccept(v -> {
-                        try {
-                            depositPlan
-                                    .airdrop(investors)
-                                    .send();
-                        } catch (Exception e) {
-                            log.warn("Error when executing airdrop function.", e);
-                        }
-                    });
+            Lists.partition(investors, investorsBatchSize)
+                    .forEach(investorsBatch -> unlockInvoke()
+                            .thenAccept(v -> {
+                                try {
+                                    depositPlan
+                                            .airdrop(investorsBatch)
+                                            .send();
+                                } catch (Exception e) {
+                                    log.warn("Error when executing airdrop function.", e);
+                                }
+                            })
+                    );
         });
     }
 }
