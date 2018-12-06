@@ -1,4 +1,4 @@
-package io.mywish.bolton.model.contracts;
+package io.mywish.airdrop.model.contracts;
 
 import io.reactivex.Flowable;
 import java.math.BigInteger;
@@ -79,7 +79,11 @@ public class DepositPlan extends Contract {
 
     public static final String FUNC_CALCULATEPAYOUTSFORTIME = "calculatePayoutsForTime";
 
-    public static final Event NEWINVESTOR_EVENT = new Event("NewInvestor", 
+    public static final Event ADDINVESTOR_EVENT = new Event("AddInvestor", 
+            Arrays.<TypeReference<?>>asList(new TypeReference<Address>(true) {}));
+    ;
+
+    public static final Event REMOVEINVESTOR_EVENT = new Event("RemoveInvestor", 
             Arrays.<TypeReference<?>>asList(new TypeReference<Address>(true) {}));
     ;
 
@@ -189,11 +193,11 @@ public class DepositPlan extends Contract {
         return executeRemoteCallTransaction(function);
     }
 
-    public List<NewInvestorEventResponse> getNewInvestorEvents(TransactionReceipt transactionReceipt) {
-        List<Contract.EventValuesWithLog> valueList = extractEventParametersWithLog(NEWINVESTOR_EVENT, transactionReceipt);
-        ArrayList<NewInvestorEventResponse> responses = new ArrayList<NewInvestorEventResponse>(valueList.size());
+    public List<AddInvestorEventResponse> getAddInvestorEvents(TransactionReceipt transactionReceipt) {
+        List<Contract.EventValuesWithLog> valueList = extractEventParametersWithLog(ADDINVESTOR_EVENT, transactionReceipt);
+        ArrayList<AddInvestorEventResponse> responses = new ArrayList<AddInvestorEventResponse>(valueList.size());
         for (Contract.EventValuesWithLog eventValues : valueList) {
-            NewInvestorEventResponse typedResponse = new NewInvestorEventResponse();
+            AddInvestorEventResponse typedResponse = new AddInvestorEventResponse();
             typedResponse.log = eventValues.getLog();
             typedResponse._investor = (String) eventValues.getIndexedValues().get(0).getValue();
             responses.add(typedResponse);
@@ -201,12 +205,12 @@ public class DepositPlan extends Contract {
         return responses;
     }
 
-    public Flowable<NewInvestorEventResponse> newInvestorEventFlowable(EthFilter filter) {
-        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, NewInvestorEventResponse>() {
+    public Flowable<AddInvestorEventResponse> addInvestorEventFlowable(EthFilter filter) {
+        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, AddInvestorEventResponse>() {
             @Override
-            public NewInvestorEventResponse apply(Log log) {
-                Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(NEWINVESTOR_EVENT, log);
-                NewInvestorEventResponse typedResponse = new NewInvestorEventResponse();
+            public AddInvestorEventResponse apply(Log log) {
+                Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(ADDINVESTOR_EVENT, log);
+                AddInvestorEventResponse typedResponse = new AddInvestorEventResponse();
                 typedResponse.log = log;
                 typedResponse._investor = (String) eventValues.getIndexedValues().get(0).getValue();
                 return typedResponse;
@@ -214,10 +218,41 @@ public class DepositPlan extends Contract {
         });
     }
 
-    public Flowable<NewInvestorEventResponse> newInvestorEventFlowable(DefaultBlockParameter startBlock, DefaultBlockParameter endBlock) {
+    public Flowable<AddInvestorEventResponse> addInvestorEventFlowable(DefaultBlockParameter startBlock, DefaultBlockParameter endBlock) {
         EthFilter filter = new EthFilter(startBlock, endBlock, getContractAddress());
-        filter.addSingleTopic(EventEncoder.encode(NEWINVESTOR_EVENT));
-        return newInvestorEventFlowable(filter);
+        filter.addSingleTopic(EventEncoder.encode(ADDINVESTOR_EVENT));
+        return addInvestorEventFlowable(filter);
+    }
+
+    public List<RemoveInvestorEventResponse> getRemoveInvestorEvents(TransactionReceipt transactionReceipt) {
+        List<Contract.EventValuesWithLog> valueList = extractEventParametersWithLog(REMOVEINVESTOR_EVENT, transactionReceipt);
+        ArrayList<RemoveInvestorEventResponse> responses = new ArrayList<RemoveInvestorEventResponse>(valueList.size());
+        for (Contract.EventValuesWithLog eventValues : valueList) {
+            RemoveInvestorEventResponse typedResponse = new RemoveInvestorEventResponse();
+            typedResponse.log = eventValues.getLog();
+            typedResponse._investor = (String) eventValues.getIndexedValues().get(0).getValue();
+            responses.add(typedResponse);
+        }
+        return responses;
+    }
+
+    public Flowable<RemoveInvestorEventResponse> removeInvestorEventFlowable(EthFilter filter) {
+        return web3j.ethLogFlowable(filter).map(new io.reactivex.functions.Function<Log, RemoveInvestorEventResponse>() {
+            @Override
+            public RemoveInvestorEventResponse apply(Log log) {
+                Contract.EventValuesWithLog eventValues = extractEventParametersWithLog(REMOVEINVESTOR_EVENT, log);
+                RemoveInvestorEventResponse typedResponse = new RemoveInvestorEventResponse();
+                typedResponse.log = log;
+                typedResponse._investor = (String) eventValues.getIndexedValues().get(0).getValue();
+                return typedResponse;
+            }
+        });
+    }
+
+    public Flowable<RemoveInvestorEventResponse> removeInvestorEventFlowable(DefaultBlockParameter startBlock, DefaultBlockParameter endBlock) {
+        EthFilter filter = new EthFilter(startBlock, endBlock, getContractAddress());
+        filter.addSingleTopic(EventEncoder.encode(REMOVEINVESTOR_EVENT));
+        return removeInvestorEventFlowable(filter);
     }
 
     public List<OwnershipTransferredEventResponse> getOwnershipTransferredEvents(TransactionReceipt transactionReceipt) {
@@ -405,7 +440,13 @@ public class DepositPlan extends Contract {
         return _addresses.get(networkId);
     }
 
-    public static class NewInvestorEventResponse {
+    public static class AddInvestorEventResponse {
+        public Log log;
+
+        public String _investor;
+    }
+
+    public static class RemoveInvestorEventResponse {
         public Log log;
 
         public String _investor;
