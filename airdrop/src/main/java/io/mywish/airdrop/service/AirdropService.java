@@ -1,9 +1,9 @@
 package io.mywish.airdrop.service;
 
-import io.mywish.eventscan.model.Investor;
-import io.mywish.eventscan.repositories.InvestorRepository;
 import io.mywish.airdrop.exception.UnlockAddressException;
 import io.mywish.airdrop.model.contracts.DepositPlan;
+import io.mywish.eventscan.model.Investor;
+import io.mywish.eventscan.repositories.InvestorRepository;
 import io.mywish.scanner.NewBlockEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -43,11 +44,18 @@ public class AirdropService {
     private String serverAddress;
     @Value("${io.mywish.airdrop.admin-password}")
     private String serverAccountPassword;
-    @Value("${io.mywish.airdrop.start-block}")
-    private Long startBlock;
-    @Value("${io.mywish.airdrop.contract-addresses}")
-    private List<String> contractAddresses;
+    @Value("${io.mywish.airdrop.origin-block}")
+    private Long originBlock;
+    @Value("${io.mywish.airdrop.silver-address}")
+    private String silverAddress;
+    @Value("${io.mywish.airdrop.gold-address}")
+    private String goldAddress;
+    @Value("${io.mywish.airdrop.platinum-address}")
+    private String platinumAddress;
+    @Value("${io.mywish.airdrop.try-and-buy-address}")
+    private String tryAndBuyAddress;
 
+    private List<String> contractAddresses;
     private TransactionManager transactionManager;
     private ContractGasProvider contractGasProvider;
 
@@ -55,7 +63,7 @@ public class AirdropService {
     protected void init() {
         transactionManager = new ClientTransactionManager(web3j, serverAddress, Integer.MAX_VALUE, 5000);
         contractGasProvider = new DefaultGasProvider();
-        contractAddresses = contractAddresses.stream()
+        contractAddresses = Stream.of(silverAddress, goldAddress, platinumAddress, tryAndBuyAddress)
                 .map(String::toLowerCase)
                 .collect(Collectors.toList());
         unlockInvoke();
@@ -71,6 +79,7 @@ public class AirdropService {
                 .stream()
                 .map(result -> (EthBlock.TransactionObject) result)
                 .map(EthBlock.TransactionObject::get)
+                .filter(tx -> tx.getTo() != null)
                 .forEach(tx -> {
                     String contractAddress = tx.getTo().toLowerCase();
 

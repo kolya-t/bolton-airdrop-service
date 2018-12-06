@@ -1,4 +1,3 @@
 etherscanner:
   polling-interval-ms: 5000
   commit-chain-length: 5
-  start-block-file: last-block
