@@ -6,17 +6,15 @@ spring:
   jpa:
     generate-ddl: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
 
 io:
   mywish:
     airdrop:
       web3-url: http://localhost:8545/
-      admin-address: "0xB11c168fD4682946975361222fFb09909Ad045a3"
-      admin-password: "123"
-      origin-block: 4571374
-      silver-address: "0xB11c168fD4682946975361222fFb09909Ad045a3"
-      gold-address: "0xB11c168fD4682946975361222fFb09909Ad045a3"
-      platinum-address: "0xB11c168fD4682946975361222fFb09909Ad045a3"
-      try-and-buy-address: "0xB11c168fD4682946975361222fFb09909Ad045a3"
-
+      admin-address: "0x99c70d782be8b506016bf2e6f6d37fcaea898749"
+      admin-password: "0xb36abd72dcf3d7f69eb0df10fc2e8554239dc9b32fba011d943ad1911a57cbb4"
+      silver-address: "0xbcaac9fe3a612aad651805228a858a10de4ec734"
+      gold-address: "0x05eb8781b34f1fd2acfe11fe286e02c29e14b732"
+      platinum-address: "0xb16c040413985fd890da7ef4cb4532dc9bc2e1fb"
+      try-and-buy-address: "0xbb711f773987a5784c70eccff6ef18e0114a6167"

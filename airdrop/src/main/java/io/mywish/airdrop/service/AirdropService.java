@@ -28,6 +28,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,8 +46,6 @@ public class AirdropService {
     private String serverAddress;
     @Value("${io.mywish.airdrop.admin-password}")
     private String serverAccountPassword;
-    @Value("${io.mywish.airdrop.origin-block}")
-    private Long originBlock;
     @Value("${io.mywish.airdrop.silver-address}")
     private String silverAddress;
     @Value("${io.mywish.airdrop.gold-address}")
@@ -86,9 +85,11 @@ public class AirdropService {
                 .forEach(tx -> {
                     String contractAddress = tx.getTo().toLowerCase();
 
-                    if (contractAddresses.contains(contractAddress)) {
+                    if (!contractAddresses.contains(contractAddress)) {
                         return;
                     }
+
+                    log.debug("Found transaction with contract address");
 
                     TransactionReceipt receipt;
                     try {
@@ -101,19 +102,26 @@ public class AirdropService {
                         return;
                     }
 
+                    log.debug("Got transaction receipt for its transaction");
                     DepositPlan depositPlan = loadDepositPlan(contractAddress);
 
                     depositPlan
                             .getAddInvestorEvents(receipt)
                             .stream()
                             .map(addInvestorEventResponse -> addInvestorEventResponse._investor)
-                            .forEach(investor -> investorRepository.save(new Investor(investor, contractAddress)));
+                            .forEach(investor -> {
+                                log.debug("Saving investor to DB: {}.", investor);
+                                investorRepository.save(new Investor(investor, contractAddress));
+                            });
 
                     depositPlan
                             .getRemoveInvestorEvents(receipt)
                             .stream()
                             .map(removeInvestorEventResponse -> removeInvestorEventResponse._investor)
-                            .forEach(investor -> investorRepository.delete(new Investor(investor, contractAddress)));
+                            .forEach(investor -> {
+                                log.debug("Removing investor from DB: {}.", investor);
+                                investorRepository.delete(new Investor(investor, contractAddress));
+                            });
                 });
     }
 
@@ -136,6 +144,14 @@ public class AirdropService {
 
     @Scheduled(cron = "0 0 12 * * *")
     protected synchronized void doAirdrop() {
+        try {
+            if (web3j.ethSyncing().send().isSyncing()) {
+                return;
+            }
+        } catch (IOException e) {
+            log.info("Skipping airdrop because node is still synching.", e);
+        }
+
         BigInteger currentLastBlockTime;
         try {
             currentLastBlockTime = web3j
@@ -170,17 +186,27 @@ public class AirdropService {
                 return;
             }
 
+            log.info("Starting airdrop for contract {} for {} investors.", contractAddress, investors.size());
             Lists.partition(investors, investorsBatchSize)
-                    .forEach(investorsBatch -> unlockInvoke()
-                            .thenAccept(v -> {
+                    .forEach(investorsBatch -> {
                                 try {
-                                    depositPlan
-                                            .airdrop(investorsBatch)
-                                            .send();
-                                } catch (Exception e) {
-                                    log.warn("Error when executing airdrop function.", e);
+                                    unlockInvoke()
+                                            .thenAccept(v -> {
+                                                try {
+                                                    log.info("Preparing to airdrop batch {} investors.", investorsBatch.size());
+                                                    String txHash = depositPlan
+                                                            .airdrop(investorsBatch)
+                                                            .send().getTransactionHash();
+                                                    log.info("Executed airdrop for {} investors, tx hash: {}", investorsBatch.size(), txHash);
+                                                } catch (Exception e) {
+                                                    log.warn("Error when executing airdrop function.", e);
+                                                }
+                                            })
+                                            .toCompletableFuture().get();
+                                } catch (InterruptedException | ExecutionException e) {
+                                    e.printStackTrace();
                                 }
-                            })
+                            }
                     );
         });
     }
