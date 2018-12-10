@@ -32,7 +32,7 @@ public class LastBlockPersister {
     }
 
     public synchronized void saveLastBlock(long blockNumber) {
-        if (lastBlock == null) {
+        if (lastBlockRepository.getLastBlock() == null) {
             lastBlockRepository.save(new LastBlock(blockNumber));
         } else {
             lastBlockRepository.updateLastBlock(blockNumber);

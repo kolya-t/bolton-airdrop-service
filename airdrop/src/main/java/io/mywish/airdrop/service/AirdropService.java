@@ -146,10 +146,11 @@ public class AirdropService {
     protected synchronized void doAirdrop() {
         try {
             if (web3j.ethSyncing().send().isSyncing()) {
+                log.info("Skipping airdrop because node is still synching.");
                 return;
             }
         } catch (IOException e) {
-            log.info("Skipping airdrop because node is still synching.", e);
+            log.warn("Error when checking node synch status.", e);
         }
 
         BigInteger currentLastBlockTime;
