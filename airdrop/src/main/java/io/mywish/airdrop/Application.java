@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.admin.Admin;
 import org.web3j.protocol.http.HttpService;
 
 @PropertySource("classpath:application.yml")
@@ -25,11 +24,6 @@ public class Application {
                 .sources(Application.class)
                 .main(Application.class)
                 .run(args);
-    }
-
-    @Bean
-    public Admin admin(@Value("${io.mywish.airdrop.web3-url}") String web3Url) {
-        return Admin.build(new HttpService(web3Url));
     }
 
     @Bean

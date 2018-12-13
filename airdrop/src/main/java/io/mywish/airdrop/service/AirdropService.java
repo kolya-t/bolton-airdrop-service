@@ -1,7 +1,6 @@
 package io.mywish.airdrop.service;
 
 import com.google.common.collect.Lists;
-import io.mywish.airdrop.exception.UnlockAddressException;
 import io.mywish.airdrop.model.contracts.DepositPlan;
 import io.mywish.eventscan.model.Investor;
 import io.mywish.eventscan.repositories.InvestorRepository;
@@ -12,13 +11,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.admin.Admin;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.tx.ClientTransactionManager;
-import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.DefaultGasProvider;
 
@@ -26,9 +23,6 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,14 +32,12 @@ public class AirdropService {
     @Autowired
     private Web3j web3j;
     @Autowired
-    private Admin admin;
-    @Autowired
     private InvestorRepository investorRepository;
 
     @Value("${io.mywish.airdrop.admin-address}")
     private String serverAddress;
-    @Value("${io.mywish.airdrop.admin-password}")
-    private String serverAccountPassword;
+    @Value("${io.mywish.airdrop.admin-private-key}")
+    private String serverPrivateKey;
     @Value("${io.mywish.airdrop.silver-address}")
     private String silverAddress;
     @Value("${io.mywish.airdrop.gold-address}")
@@ -58,21 +50,20 @@ public class AirdropService {
     private int investorsBatchSize;
 
     private List<String> contractAddresses;
-    private TransactionManager transactionManager;
+    private Credentials credentials;
     private ContractGasProvider contractGasProvider;
 
     @PostConstruct
     protected void init() {
-        transactionManager = new ClientTransactionManager(web3j, serverAddress, Integer.MAX_VALUE, 5000);
+        credentials = Credentials.create(serverPrivateKey);
         contractGasProvider = new DefaultGasProvider();
         contractAddresses = Stream.of(silverAddress, goldAddress, platinumAddress, tryAndBuyAddress)
                 .map(String::toLowerCase)
                 .collect(Collectors.toList());
-        unlockInvoke();
     }
 
     private DepositPlan loadDepositPlan(String contractAddress) {
-        return DepositPlan.load(contractAddress, web3j, transactionManager, contractGasProvider);
+        return DepositPlan.load(contractAddress, web3j, credentials, contractGasProvider);
     }
 
     @EventListener
@@ -110,7 +101,7 @@ public class AirdropService {
                             .stream()
                             .map(addInvestorEventResponse -> addInvestorEventResponse._investor)
                             .forEach(investor -> {
-                                log.debug("Saving investor to DB: {}.", investor);
+                                log.info("Saving investor to DB: {}.", investor);
                                 investorRepository.save(new Investor(investor, contractAddress));
                             });
 
@@ -119,7 +110,7 @@ public class AirdropService {
                             .stream()
                             .map(removeInvestorEventResponse -> removeInvestorEventResponse._investor)
                             .forEach(investor -> {
-                                log.debug("Removing investor from DB: {}.", investor);
+                                log.info("Removing investor from DB: {}.", investor);
                                 investorRepository.delete(new Investor(investor, contractAddress));
                             });
                 });
@@ -191,21 +182,14 @@ public class AirdropService {
             Lists.partition(investors, investorsBatchSize)
                     .forEach(investorsBatch -> {
                                 try {
-                                    unlockInvoke()
-                                            .thenAccept(v -> {
-                                                try {
-                                                    log.info("Preparing to airdrop batch {} investors.", investorsBatch.size());
-                                                    String txHash = depositPlan
-                                                            .airdrop(investorsBatch)
-                                                            .send().getTransactionHash();
-                                                    log.info("Executed airdrop for {} investors, tx hash: {}", investorsBatch.size(), txHash);
-                                                } catch (Exception e) {
-                                                    log.warn("Error when executing airdrop function.", e);
-                                                }
-                                            })
-                                            .toCompletableFuture().get();
-                                } catch (InterruptedException | ExecutionException e) {
-                                    e.printStackTrace();
+                                    log.debug("Preparing to airdrop batch {} investors.", investorsBatch.size());
+                                    String txHash = depositPlan
+                                            .airdrop(investorsBatch)
+                                            .send()
+                                            .getTransactionHash();
+                                    log.info("Executed airdrop for {} investors, tx hash: {}", investorsBatch.size(), txHash);
+                                } catch (Exception e) {
+                                    log.warn("Error when executing airdrop function.", e);
                                 }
                             }
                     );

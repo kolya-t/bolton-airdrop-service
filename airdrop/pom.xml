@@ -74,7 +74,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>Application</mainClass>
+                    <mainClass>io.mywish.airdrop.Application</mainClass>
                 </configuration>
                 <executions>
                     <execution>
