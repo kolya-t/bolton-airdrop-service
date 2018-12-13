@@ -178,7 +178,7 @@ public class AirdropService {
                 return;
             }
 
-            log.info("Starting airdrop for contract {} for {} investors.", contractAddress, investors.size());
+            log.debug("Starting airdrop for contract {} for {} investors.", contractAddress, investors.size());
             Lists.partition(investors, investorsBatchSize)
                     .forEach(investorsBatch -> {
                                 try {
