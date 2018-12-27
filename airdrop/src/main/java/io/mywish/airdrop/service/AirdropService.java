@@ -116,24 +116,7 @@ public class AirdropService {
                 });
     }
 
-    private CompletableFuture<Void> unlockInvokeFuture() {
-        if (serverAccountPassword == null || serverAccountPassword.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
-        }
-        return admin.personalUnlockAccount(serverAddress, serverAccountPassword)
-                .sendAsync()
-                .thenAccept(personalUnlockAccount -> {
-                    if (personalUnlockAccount.getResult() == null || !personalUnlockAccount.getResult()) {
-                        throw new UnlockAddressException("Impossible to unlock account " + serverAddress + ".");
-                    }
-                });
-    }
-
-    private CompletionStage<Void> unlockInvoke() {
-        return unlockInvokeFuture();
-    }
-
-    @Scheduled(cron = "0 0 12 * * *")
+    @Scheduled(cron = "0 0 1 * * ?")
     protected synchronized void doAirdrop() {
         try {
             if (web3j.ethSyncing().send().isSyncing()) {
